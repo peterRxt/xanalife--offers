@@ -1,277 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Xanalife Hot Deals – Advert Card Generator</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xanalife Hot Deals – Advert Card Generator</title>
+  <!-- html2canvas & jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    :root {
+      --green: #0f6b3f;
+      --gold: #f4b740;
+      --border: #222;
+    }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #222;
+    }
+    .controls {
+      max-width: 1000px;
+      margin: 0 auto 20px;
+      background: #fff;
+      padding: 20px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.08);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 12px;
+    }
+    .controls .field {
+      flex: 1 1 160px;
+      min-width: 140px;
+    }
+    .controls label {
+      font-weight: 600;
+      font-size: 13px;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .controls input, .controls textarea, .controls select {
+      width: 100%;
+      padding: 8px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      background: #fff;
+    }
+    .controls textarea {
+      resize: vertical;
+      min-height: 40px;
+    }
+    .controls .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .controls button {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .controls button:hover { opacity: .9; }
+    .controls .btn-secondary { background: #444; }
+    .controls .btn-danger { background: #c62828; }
+    .controls .btn-gold { background: #b8860b; }
 
-<!-- html2canvas & jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: #fff;
+      padding: 10mm;
+      box-shadow: 0 0 0 1px #ddd;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 80mm;
+      gap: 6mm;
+    }
+    /* card base */
+    .card {
+      width: 100mm;
+      height: 80mm;
+      position: relative;
+      border: 1px dashed var(--border);
+      background: url('logo.jpeg') center center / 80% no-repeat;
+      padding: 6mm;
+      box-sizing: border-box;
+      overflow: hidden;
+      box-shadow: 0 6px 16px rgba(0,0,0,.12);
+    }
+    /* overlay for readability */
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.85);
+      z-index: 0;
+    }
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, 
+        rgba(255,255,255,0.9) 0%,
+        rgba(255,255,255,0.8) 20%,
+        rgba(255,255,255,0.7) 40%,
+        rgba(255,255,255,0.85) 60%,
+        rgba(255,255,255,0.9) 80%,
+        rgba(255,255,255,0.95) 100%);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 4px;
+      padding: 4mm;
+      overflow: hidden;
+    }
+    .header {
+      text-align: center;
+      line-height: 1.1;
+      padding-bottom: 2mm;
+      border-bottom: 2px solid var(--gold);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 4px 4px 0 0;
+      margin: -4mm -4mm 0 -4mm;
+      padding: 4mm 4mm 2mm 4mm;
+      flex-shrink: 0;
+    }
+    .header .brand {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--green);
+    }
+    .header .deal {
+      font-size: 15px;
+      font-weight: 800;
+      color: #c62828;
+    }
+    .desc {
+      flex: 1 1 auto;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4mm 2mm;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 4px;
+      margin: 4mm 0;
+      word-break: break-word;
+      hyphens: auto;
+      line-height: 1.3;
+      min-height: 0;
+      overflow: hidden;
+      white-space: pre-wrap; /* Preserve line breaks */
+    }
+    /* if description is long, reduce font size dynamically via JS */
+    .desc.small-text {
+      font-size: 14px;
+    }
+    .desc.xsmall-text {
+      font-size: 12px;
+    }
+    .prices {
+      text-align: center;
+      margin-top: auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 4px;
+      padding: 3mm 2mm;
+      margin: 0 -4mm -4mm -4mm;
+      flex-shrink: 0;
+    }
+    .old {
+      font-size: 15px;
+      color: #555;
+      text-decoration: line-through;
+      margin-bottom: 2px;
+    }
+    .new {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--green);
+      margin-bottom: 2px;
+      line-height: 1.1;
+    }
+    .save {
+      font-size: 15px;
+      color: #000;
+      font-weight: 800;
+      background-color: rgba(244, 183, 64, 0.35);
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      border: 1px solid var(--gold);
+    }
+    /* BOGO badge */
+    .bogo-badge {
+      background: #c62828;
+      color: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-left: 6px;
+      letter-spacing: 0.5px;
+    }
+    .deal-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
 
-<style>
-:root{
-  --green:#0f6b3f;
-  --gold:#f4b740;
-  --border:#222;
-}
+    /* logo position classes */
+    .logo-top-left { background-position: 5% 5% !important; background-size: 30% !important; }
+    .logo-top-right { background-position: 95% 5% !important; background-size: 30% !important; }
+    .logo-center { background-position: center center !important; background-size: 60% !important; }
+    .logo-bottom-left { background-position: 5% 95% !important; background-size: 30% !important; }
+    .logo-bottom-right { background-position: 95% 95% !important; background-size: 30% !important; }
 
-body{
-  font-family: "Segoe UI", Arial, sans-serif;
-  background:#f4f6f8;
-  margin:0;
-  padding:20px;
-}
-
-h1{
-  text-align:center;
-  margin-bottom:20px;
-  color:#222;
-}
-
-.controls{
-  max-width:1000px;
-  margin:0 auto 20px;
-  background:#fff;
-  padding:16px;
-  border-radius:8px;
-  box-shadow:0 4px 14px rgba(0,0,0,.08);
-}
-
-.controls label{
-  font-weight:600;
-  font-size:14px;
-}
-
-.controls input,.controls textarea{
-  width:100%;
-  padding:8px;
-  margin:6px 0 12px;
-  border:1px solid #ccc;
-  border-radius:4px;
-}
-
-.controls button{
-  background:var(--green);
-  color:#fff;
-  border:none;
-  padding:10px 16px;
-  border-radius:4px;
-  cursor:pointer;
-  font-weight:600;
-}
-
-.controls button:hover{opacity:.9}
-
-.page{
-  width:210mm;
-  min-height:297mm;
-  margin:0 auto;
-  background:#fff;
-  padding:10mm;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows:80mm;
-  gap:6mm;
-}
-
-.card{
-  box-shadow:0 6px 16px rgba(0,0,0,.15);
-  width:100mm;
-  height:80mm;
-  position:relative;
-  border:1px dashed var(--border);
-  background: url('logo.jpeg') center center / 80% no-repeat;
-  padding:6mm;
-  box-sizing:border-box;
-  overflow: hidden;
-}
-
-/* Overlay to ensure text readability */
-.card::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: rgba(255, 255, 255, 0.85);
-  z-index:0;
-}
-
-/* Optional: Add a subtle gradient to blend logo edges */
-.card::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: linear-gradient(to bottom, 
-    rgba(255,255,255,0.9) 0%,
-    rgba(255,255,255,0.8) 20%,
-    rgba(255,255,255,0.7) 40%,
-    rgba(255,255,255,0.85) 60%,
-    rgba(255,255,255,0.9) 80%,
-    rgba(255,255,255,0.95) 100%);
-  z-index:0;
-  pointer-events: none;
-}
-
-.content{
-  position:relative;
-  z-index:2; /* Higher than overlays */
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  background: rgba(255, 255, 255, 0.85); /* Semi-transparent white background */
-  border-radius: 4px;
-  padding: 4mm;
-}
-
-.header{
-  text-align:center;
-  line-height:1.1;
-  padding-bottom:2mm;
-  border-bottom:2px solid var(--gold);
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 4px 4px 0 0;
-  margin: -4mm -4mm 0 -4mm;
-  padding: 4mm 4mm 2mm 4mm;
-}
-
-.header .brand{
-  font-size:20px;
-  font-weight:900;
-  color:var(--green);
-}
-
-.header .deal{
-  font-size:15px;
-  font-weight:800;
-  color:#c62828;
-}
-
-.desc{
-  flex:1;
-  font-size:18px;
-  margin:8px 0;
-  text-align:center;
-  font-weight:700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4mm 0;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
-  margin: 4mm 0;
-}
-
-.prices{
-  text-align:center;
-  margin-top: auto;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 4px;
-  padding: 4mm;
-  margin: 0 -4mm -4mm -4mm;
-}
-
-.old{
-  font-size:16px;
-  color:#555;
-  text-decoration:line-through;
-  margin-bottom: 3px;
-}
-
-.new{
-  font-size:30px;
-  font-weight:900;
-  color:var(--green);
-  margin-bottom: 5px;
-}
-
-.save{
-  font-size:16px;
-  color:#000;
-  font-weight:800;
-  background-color: rgba(244, 183, 64, 0.4);
-  padding: 6px 12px;
-  border-radius: 4px;
-  display: inline-block;
-  border: 1px solid var(--gold);
-}
-
-@media print{
-  body{background:#fff; padding:0}
-  .controls{display:none}
-  .card{
-    border:1px solid #000;
-    background: url('logo.jpeg') center center / 80% no-repeat !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .card::before,
-  .card::after,
-  .content,
-  .header,
-  .desc,
-  .prices{
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-}
-
-/* Logo positioning adjustment classes */
-.logo-top-left {
-  background-position: 5% 5% !important;
-  background-size: 30% !important;
-}
-
-.logo-top-right {
-  background-position: 95% 5% !important;
-  background-size: 30% !important;
-}
-
-.logo-center {
-  background-position: center center !important;
-  background-size: 60% !important;
-}
-
-.logo-bottom-left {
-  background-position: 5% 95% !important;
-  background-size: 30% !important;
-}
-
-.logo-bottom-right {
-  background-position: 95% 95% !important;
-  background-size: 30% !important;
-}
-</style>
+    @media print {
+      body { background: #fff; padding: 0; }
+      .controls { display: none; }
+      .card { border: 1px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .card::before, .card::after, .content, .header, .desc, .prices {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+    /* responsive */
+    @media (max-width: 700px) {
+      .controls .field { flex: 1 1 100%; }
+    }
+  </style>
 </head>
 <body>
-
 <h1>Xanalife Hot Deals – Advert Card Generator</h1>
 
 <div class="controls">
-  <label>Product Description</label>
-  <textarea id="desc" rows="2" placeholder="e.g. Xanalife Herbal Supplement"></textarea>
-
-  <label>Old Price</label>
-  <input id="oldPrice" type="number" placeholder="e.g. 2500">
-
-  <label>New Price</label>
-  <input id="newPrice" type="number" placeholder="e.g. 1800">
-
-  <label>Logo Position</label>
-  <select id="logoPosition" style="width:100%; padding:8px; margin:6px 0 12px; border:1px solid #ccc; border-radius:4px;">
-    <option value="center">Center (Default)</option>
-    <option value="top-left">Top Left</option>
-    <option value="top-right">Top Right</option>
-    <option value="bottom-left">Bottom Left</option>
-    <option value="bottom-right">Bottom Right</option>
-  </select>
-
-  <button onclick="addCard()">Add Advert</button>
-  <button onclick="downloadPDF()" style="margin-left:10px;background:#444">Download A4 PDF</button>
-  <button onclick="clearAll()" style="margin-left:10px;background:#c62828">Clear All</button>
+  <div class="field">
+    <label>Product Description <span style="font-weight:400;font-size:12px;">(press Enter for new line)</span></label>
+    <textarea id="desc" rows="3" placeholder="e.g. Xanalife Herbal Supplement&#10;Premium Quality">Xanalife Energy Boost</textarea>
+  </div>
+  <div class="field">
+    <label>Old Price (KES)</label>
+    <input id="oldPrice" type="number" placeholder="2500" value="2500">
+  </div>
+  <div class="field">
+    <label>New Price (KES)</label>
+    <input id="newPrice" type="number" placeholder="1800" value="1800">
+  </div>
+  <div class="field" style="min-width:130px;">
+    <label>Deal Type</label>
+    <select id="dealType" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+      <option value="standard">Standard (Save)</option>
+      <option value="bogo">Buy 1 Get 1 Free</option>
+    </select>
+  </div>
+  <div class="field" style="min-width:120px;">
+    <label>Logo Position</label>
+    <select id="logoPosition" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+      <option value="center">Center</option>
+      <option value="top-left">Top Left</option>
+      <option value="top-right">Top Right</option>
+      <option value="bottom-left">Bottom Left</option>
+      <option value="bottom-right">Bottom Right</option>
+    </select>
+  </div>
+  <div class="actions">
+    <button onclick="addCard()">➕ Add Advert</button>
+    <button onclick="downloadPDF()" class="btn-secondary">📄 Download PDF</button>
+    <button onclick="clearAll()" class="btn-danger">✖ Clear All</button>
+  </div>
 </div>
 
 <div class="page" id="printArea">
@@ -279,106 +307,183 @@ h1{
 </div>
 
 <script>
-// ===== CORE STATE =====
-const MAX_ADVERTS = 6;
-let advertCount = 0;
+  (function() {
+    const MAX_ADVERTS = 6;
+    let advertCount = 0;
 
-// ===== ADD ADVERT =====
-function addCard(){
-  const grid = document.getElementById('grid');
-  const d = document.getElementById('desc').value.trim();
-  const o = parseFloat(document.getElementById('oldPrice').value);
-  const n = parseFloat(document.getElementById('newPrice').value);
-  const position = document.getElementById('logoPosition').value;
+    const grid = document.getElementById('grid');
+    const descInput = document.getElementById('desc');
+    const oldPriceInput = document.getElementById('oldPrice');
+    const newPriceInput = document.getElementById('newPrice');
+    const dealTypeSelect = document.getElementById('dealType');
+    const logoPositionSelect = document.getElementById('logoPosition');
 
-  if(advertCount >= MAX_ADVERTS){
-    alert('Only 6 adverts allowed per A4 page');
-    return;
-  }
+    // helper: adjust desc font size based on text length (including line breaks)
+    function setDescFontSize(descElement, text) {
+      const len = text.replace(/\n/g, ' ').length; // count characters ignoring newlines
+      descElement.classList.remove('small-text', 'xsmall-text');
+      if (len > 40) descElement.classList.add('small-text');
+      if (len > 70) descElement.classList.add('xsmall-text');
+    }
 
-  if(!d || isNaN(o) || isNaN(n) || n >= o){
-    alert('Enter valid description, old price and lower new price');
-    return;
-  }
+    window.addCard = function() {
+      if (advertCount >= MAX_ADVERTS) {
+        alert('Only 6 adverts allowed per A4 page');
+        return;
+      }
 
-  const save = o - n;
+      const desc = descInput.value;
+      const oldPrice = parseFloat(oldPriceInput.value);
+      const newPrice = parseFloat(newPriceInput.value);
+      const dealType = dealTypeSelect.value;
+      const position = logoPositionSelect.value;
 
-  const card = document.createElement('div');
-  card.className = 'card';
-  
-  // Add logo position class
-  let positionClass = 'logo-center';
-  switch(position) {
-    case 'top-left': positionClass = 'logo-top-left'; break;
-    case 'top-right': positionClass = 'logo-top-right'; break;
-    case 'bottom-left': positionClass = 'logo-bottom-left'; break;
-    case 'bottom-right': positionClass = 'logo-bottom-right'; break;
-    default: positionClass = 'logo-center';
-  }
-  
-  card.className = `card ${positionClass}`;
-  
-  card.innerHTML = `
-    <div class="content">
-      <div class="header">
-        <div class="brand">XanaLife</div>
-        <div class="deal">Hot Deals</div>
-      </div>
-      <div class="desc">${d}</div>
-      <div class="prices">
-        <div class="old">KES ${o.toLocaleString()}</div>
-        <div class="new">KES ${n.toLocaleString()}</div>
-        <div class="save">Save KES ${save.toLocaleString()}</div>
-      </div>
-    </div>`;
+      if (!desc.trim()) {
+        alert('Please enter a product description.');
+        return;
+      }
+      if (isNaN(oldPrice) || oldPrice <= 0) {
+        alert('Enter a valid old price.');
+        return;
+      }
+      if (isNaN(newPrice) || newPrice <= 0) {
+        alert('Enter a valid new price.');
+        return;
+      }
+      if (dealType === 'standard' && newPrice >= oldPrice) {
+        alert('For standard deal, new price must be lower than old price.');
+        return;
+      }
+      if (dealType === 'bogo' && newPrice >= oldPrice) {
+        alert('For BOGO, new price (price for 1 item) must be lower than old price (price for 2 items).');
+        return;
+      }
 
-  grid.appendChild(card);
-  advertCount++;
-}
+      // compute savings
+      let savings, displayOld, displayNew, saveText;
+      if (dealType === 'bogo') {
+        savings = oldPrice - newPrice;
+        displayOld = oldPrice;
+        displayNew = newPrice;
+        saveText = `Save KES ${savings.toLocaleString()}`; // Removed (BOGO)
+      } else {
+        savings = oldPrice - newPrice;
+        displayOld = oldPrice;
+        displayNew = newPrice;
+        saveText = `Save KES ${savings.toLocaleString()}`;
+      }
 
-// ===== CLEAR ALL ADVERTS =====
-function clearAll(){
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
-  advertCount = 0;
-}
+      const card = document.createElement('div');
+      // logo position class
+      let posClass = 'logo-center';
+      switch(position) {
+        case 'top-left': posClass = 'logo-top-left'; break;
+        case 'top-right': posClass = 'logo-top-right'; break;
+        case 'bottom-left': posClass = 'logo-bottom-left'; break;
+        case 'bottom-right': posClass = 'logo-bottom-right'; break;
+        default: posClass = 'logo-center';
+      }
+      card.className = `card ${posClass}`;
 
-// ===== PDF EXPORT =====
-async function downloadPDF(){
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','mm','a4');
-  const page = document.getElementById('printArea');
+      // build deal badge if BOGO
+      let dealBadge = '';
+      if (dealType === 'bogo') {
+        dealBadge = `<span class="bogo-badge">BOGO</span>`;
+      }
 
-  const canvas = await html2canvas(page, {
-    scale: 2,
-    backgroundColor: '#ffffff',
-    useCORS: true, // Important for loading local images
-    allowTaint: true // Important for loading local images
-  });
+      // Preserve line breaks by using textContent + white-space: pre-wrap
+      card.innerHTML = `
+        <div class="content">
+          <div class="header">
+            <div class="brand">XanaLife</div>
+            <div class="deal-row">
+              <span class="deal">Hot Deals</span>
+              ${dealBadge}
+            </div>
+          </div>
+          <div class="desc" id="desc-${Date.now()}">${desc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+          <div class="prices">
+            <div class="old">KES ${displayOld.toLocaleString()}</div>
+            <div class="new">KES ${displayNew.toLocaleString()}</div>
+            <div class="save">${saveText}</div>
+          </div>
+        </div>`;
 
-  const imgData = canvas.toDataURL('image/png');
-  const pdfWidth = 210;
-  const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      grid.appendChild(card);
+      advertCount++;
 
-  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-  pdf.save('xanalife-hot-deals.pdf');
-}
+      // adjust font size of desc based on content length
+      const descElement = card.querySelector('.desc');
+      if (descElement) {
+        setDescFontSize(descElement, desc);
+      }
+    };
 
-// ===== PRELOAD LOGO =====
-// This helps ensure the logo loads properly for html2canvas
-window.addEventListener('load', function() {
-  // Preload the logo image
-  const logoImg = new Image();
-  logoImg.src = 'logo.jpeg';
-  logoImg.onload = function() {
-    console.log('Logo loaded successfully');
-  };
-  logoImg.onerror = function() {
-    console.log('Error loading logo.jpg - please ensure it exists in the same folder');
-    alert('Logo image (logo.jpeg) not found. Please ensure it exists in the same folder as this HTML file.');
-  };
-});
+    window.clearAll = function() {
+      grid.innerHTML = '';
+      advertCount = 0;
+    };
+
+    window.downloadPDF = async function() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const page = document.getElementById('printArea');
+
+      try {
+        const canvas = await html2canvas(page, {
+          scale: 2.5,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: true,
+          logging: false
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = 210;
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('xanalife-hot-deals.pdf');
+      } catch (e) {
+        alert('PDF generation error: ' + e.message);
+      }
+    };
+
+    // preload logo
+    window.addEventListener('load', function() {
+      const img = new Image();
+      img.src = 'logo.jpeg';
+      img.onload = () => console.log('Logo loaded.');
+      img.onerror = () => {
+        console.warn('logo.jpeg not found – using fallback background.');
+      };
+    });
+
+    // add demo cards on load
+    window.addEventListener('load', function() {
+      // Demo 1: Standard with line break
+      descInput.value = 'Xanalife Energy Boost\nPremium Formula';
+      oldPriceInput.value = '2500';
+      newPriceInput.value = '1800';
+      dealTypeSelect.value = 'standard';
+      logoPositionSelect.value = 'center';
+      addCard();
+
+      // Demo 2: BOGO with multi-line description
+      descInput.value = 'Xanalife Wellness Pack\nComplete Health\nFamily Size';
+      oldPriceInput.value = '4200';
+      newPriceInput.value = '3200';
+      dealTypeSelect.value = 'bogo';
+      logoPositionSelect.value = 'bottom-right';
+      addCard();
+
+      // reset inputs
+      descInput.value = '';
+      oldPriceInput.value = '';
+      newPriceInput.value = '';
+      dealTypeSelect.value = 'standard';
+      logoPositionSelect.value = 'center';
+    });
+
+  })();
 </script>
-
 </body>
 </html>
